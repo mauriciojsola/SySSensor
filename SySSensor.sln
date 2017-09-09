@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SySSensor.Web", "SySSensor.Web\SySSensor.Web.csproj", "{E3A3A8A6-86A0-4803-B76E-BA1212F217D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SySSensor.Web.Tests", "SySSensor.Web.Tests\SySSensor.Web.Tests.csproj", "{AE659E79-5BC8-4B37-9866-3E50463B449D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SySSensor.Core", "SySSensor.Core\SySSensor.Core.csproj", "{E925D484-6235-4321-8E75-EEAE7C07058B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E3A3A8A6-86A0-4803-B76E-BA1212F217D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3A3A8A6-86A0-4803-B76E-BA1212F217D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3A3A8A6-86A0-4803-B76E-BA1212F217D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3A3A8A6-86A0-4803-B76E-BA1212F217D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE659E79-5BC8-4B37-9866-3E50463B449D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE659E79-5BC8-4B37-9866-3E50463B449D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE659E79-5BC8-4B37-9866-3E50463B449D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE659E79-5BC8-4B37-9866-3E50463B449D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E925D484-6235-4321-8E75-EEAE7C07058B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E925D484-6235-4321-8E75-EEAE7C07058B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E925D484-6235-4321-8E75-EEAE7C07058B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E925D484-6235-4321-8E75-EEAE7C07058B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
