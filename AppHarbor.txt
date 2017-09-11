@@ -1,0 +1,10 @@
+SQLSERVER_CONNECTION_STRING
+
+Server=e1cfc671-57c3-4382-b25f-a7eb00d8fce3.sqlserver.sequelizer.com;Database=dbe1cfc67157c34382b25fa7eb00d8fce3;User ID=jocrblbykyzrmqii;Password=maBfVgtKyNAh2XwgfyvnY6BhNx6Q25agSiMe3vappDpxb4gJHWKeqhDpFuzxjLSC;
+
+
+SQLSERVER_URI
+
+sqlserver://jocrblbykyzrmqii:maBfVgtKyNAh2XwgfyvnY6BhNx6Q25agSiMe3vappDpxb4gJHWKeqhDpFuzxjLSC@e1cfc671-57c3-4382-b25f-a7eb00d8fce3.sqlserver.sequelizer.com/dbe1cfc67157c34382b25fa7eb00d8fce3
+
+

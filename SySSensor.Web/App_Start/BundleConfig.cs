@@ -34,6 +34,8 @@ namespace SySSensor.Web
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/bootstrap.css",
                       "~/Content/site.css",
+                      "~/Content/bootstrap-theme.css",
+                      "~/Content/modern-business.css",
                       "~/Content/plugins/morris.css",
                       "~/Content/font-awesome-4.1.0/css/font-awesome.min.css"
                       ));
