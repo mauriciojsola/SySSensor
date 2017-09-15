@@ -31,14 +31,14 @@ namespace SySSensor.Web
                       "~/Scripts/plugins/flot/jquery.flot.pie.js"
                       ));
 
-            bundles.Add(new StyleBundle("~/Content/css").Include(
-                      "~/Content/site.css",
-                      "~/Content/bootstrap.css",
-                      //"~/Content/bootstrap-theme.css",
-                      "~/Content/plugins/morris.css",
-                      //"~/Content/font-awesome-4.1.0/css/font-awesome.min.css",
-                      "~/Content/modern-business.css"
-                      ));
+            //bundles.Add(new StyleBundle("~/Content/css").Include(
+            //          "~/Content/site.css",
+            //          "~/Content/bootstrap.css",
+            //          //"~/Content/bootstrap-theme.css",
+            //          "~/Content/plugins/morris.css",
+            //          //"~/Content/font-awesome-4.1.0/css/font-awesome.min.css",
+            //          "~/Content/modern-business.css"
+            //          ));
 
 
         }
