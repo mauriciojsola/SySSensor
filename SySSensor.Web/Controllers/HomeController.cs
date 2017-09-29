@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Web.Mvc;
 using SySSensor.Core.DAL;
+using SySSensor.Core.Services;
 using SySSensor.Web.Models;
 
 namespace SySSensor.Web.Controllers
@@ -12,7 +14,23 @@ namespace SySSensor.Web.Controllers
     {
         public ActionResult Index()
         {
+            ReadFiles();
             return View();
+        }
+
+        private void ReadFiles()
+        {
+            var service = new RemotingService();
+            var files = service.GetRemoteLogFileNames();
+
+            foreach (var file in files.Take(3))
+            {
+                Debug.WriteLine("***********************************************");
+                Debug.WriteLine("******** FILE: " + file);
+                var fileContent = service.GetRemoteLogFileName(file);
+                Debug.WriteLine("CONTENT: " + fileContent);
+            }
+
         }
 
         //public ActionResult About()
