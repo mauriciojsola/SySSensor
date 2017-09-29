@@ -1,0 +1,246 @@
+#include <Adafruit_Sensor.h>
+#include "DHT.h"
+#include "Wire.h"
+#include <SPI.h>
+//#include <Ethernet.h>
+#include <SD.h>
+
+// Real time clock
+#define DS3231_I2C_ADDRESS 0x68
+
+// Sensor de humedad
+#define DHT_PIN 2     // Pin donde está conectado el sensor. Digital
+//#define DHTTYPE DHT11   // Descomentar si se usa el DHT 11
+#define DHT_TYPE DHT22   // Sensor DHT22
+
+// SD Card Pin
+#define SDCARD_PIN 4
+
+// LED
+#define LED_PIN 13
+
+#define LOG_INTERVAL  15000  // mills between entries
+#define ECHO_TO_SERIAL   1  // echo data to serial port if nonzero
+
+// Global variables
+byte second, minute, hour, weekDay, day, month, year; // Global variables to store RTC data
+float humidity, temperature;
+String loggerFileName = "";
+byte lastHour = -1;
+long lastTimeRead = 0; //Para guardar el tiempo de la última lectura
+
+// Inicializar el sensor de humedad
+DHT dht(DHT_PIN, DHT_TYPE);
+
+void setup() {
+	Serial.begin(9600);
+	ConsoleLn("Iniciando Sensor de Humedad...");
+	dht.begin();
+
+	ConsoleLn("Iniciando Reloj...");
+	Wire.begin();
+
+	Serial.print(F("Iniciando Tarjeta SD... "));
+	if (!SD.begin(SDCARD_PIN)) ConsoleLn(F("FALLO"));
+	else ConsoleLn(F("CORRECTO"));
+
+	InitVariables();
+
+	pinMode(LED_PIN, OUTPUT);
+}
+
+void loop() {
+	//---------Lectura del Sensor--------------------------
+	if (millis() - lastTimeRead > LOG_INTERVAL)
+	{
+		// Reat temperature and humidity
+		ReadTH();
+		// Read data from DS3231
+		ReadClock();
+
+		// If the hour changed, then generate a new logger filename
+		if (lastHour != hour)
+		{
+			lastHour = hour;
+			GetLoggerFilename();
+		}
+
+		//--------Enviamos las lecturas por el puerto serial-------------
+#if ECHO_TO_SERIAL
+		Serial.print(loggerFileName);
+		Serial.print(",");
+		Serial.print(temperature);
+		Serial.print(",");
+		Serial.print(humidity);
+		Serial.println();
+#endif  // ECHO_TO_SERIAL
+
+		// open the file.note that only one file can be open at a time,
+		// so you have to close this one before opening another.
+		File loggerFile = SD.open(loggerFileName, FILE_WRITE);
+
+		// if the file is available, write to it:
+		if (loggerFile) {
+			loggerFile.print(FormatFullDateTime());
+			loggerFile.print(",");
+			loggerFile.print(temperature);
+			loggerFile.print(",");
+			loggerFile.print(humidity);
+			loggerFile.println();
+
+			loggerFile.close();
+			FlashLed();
+		}
+		// if the file isn't open, pop up an error:
+		else {
+			ConsoleLn("error opening the log file");
+		}
+
+		lastTimeRead = millis(); //actualizamos el tiempo de la última lectura
+	}
+
+	delay(100);
+	//-------------------------------
+}
+
+void FlashLed() {
+	digitalWrite(LED_PIN, HIGH);
+	delay(100);
+	digitalWrite(LED_PIN, LOW);
+	delay(100);
+}
+
+// Convert normal decimal numbers to binary coded decimal
+byte decToBcd(byte val)
+{
+	return((val / 10 * 16) + (val % 10));
+}
+// Convert binary coded decimal to normal decimal numbers
+byte bcdToDec(byte val)
+{
+	return((val / 16 * 10) + (val % 16));
+}
+
+String FormatLoggerFileName()
+{
+	return FormatDate() + (hour < 10 ? "0" + String(hour) : String(hour));
+}
+
+String FormatFullDateTime()
+{
+	return FormatDate() + FormatTime();
+}
+
+String FormatDate()
+{
+	String formattedHour = "";
+
+	if (year < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(year);
+
+	if (month < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(month);
+
+	if (day < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(day);
+
+	return formattedHour;
+}
+
+String FormatTime()
+{
+	String formattedHour = "";
+
+	if (hour < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(hour);
+
+	if (minute < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(minute);
+
+	if (second < 10)
+	{
+		formattedHour.concat("0");
+	}
+	formattedHour.concat(second);
+
+	return formattedHour;
+}
+
+// & means the 'address-of', you will see that in placeholders for functions to modify the parameter variable as in C, parameter variables are passed by value, 
+// using the ampersand means to pass by reference.
+// * means the 'dereference' of a pointer variable, meaning to get the value of that pointer variable.
+void ReadClock()
+{
+	Wire.beginTransmission(DS3231_I2C_ADDRESS);
+	Wire.write(0); // set DS3231 register pointer to 00h
+	Wire.endTransmission();
+	Wire.requestFrom(DS3231_I2C_ADDRESS, 7);
+	// request seven bytes of data from DS3231 starting from register 00h
+	second = bcdToDec(Wire.read() & 0x7f);
+	minute = bcdToDec(Wire.read());
+	hour = bcdToDec(Wire.read() & 0x3f);
+	weekDay = bcdToDec(Wire.read());
+	day = bcdToDec(Wire.read());
+	month = bcdToDec(Wire.read());
+	year = bcdToDec(Wire.read());
+}
+
+void ReadTH()
+{
+	humidity = dht.readHumidity(); //Leemos la Humedad
+	temperature = dht.readTemperature(); //Leemos la temperatura en grados Celsius
+	//float f = dht.readTemperature(true); //Leemos la temperatura en grados Fahrenheit
+}
+
+void GetLoggerFilename()
+{
+	// The logger file name is of pattern YYMMDDHH.TH -> 17090123.TH
+	// char loggerFileName[] = "";
+	// sprintf(loggerFileName, "%02d%02d%02d%02d.TH", year, month, day, hour);
+	loggerFileName = FormatLoggerFileName() + ".TH";
+}
+
+void InitVariables()
+{
+	//lastHour = -1;
+}
+
+void ConsoleLn(String message) {
+	Console(message, true);
+}
+
+void ConsoleLn(int value) {
+	Console(String(value), true);
+}
+
+void Console(int value, bool newLine) {
+	Console(String(value), true);
+}
+
+void Console(String message, bool newLine) {
+#if ECHO_TO_SERIAL
+	if (newLine)
+	{
+		Serial.println(message);
+	}
+	else
+	{
+		Serial.print(message);
+	}
+#endif  // ECHO_TO_SERIAL
+}

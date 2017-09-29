@@ -1,0 +1,450 @@
+#include <SPI.h>
+#include <Ethernet.h>
+#include <SD.h>
+
+// Chip Select Pins
+#define SD_PIN 4
+#define ETHERNET_PIN 10
+// 
+#define URL_BUFFER	512
+#define WEB_PORT	80
+#define WEB_SERBAUD	9600
+#define WEB_PINSS	10
+#define WEB_CSELECT	4
+#define WEB_BUFFER	512
+#define WEB_REQSIZE	32
+#define WEB_PARAM_SIZE	64
+
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+
+// change to your network settings
+IPAddress ip(192, 168, 1, 110);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress subnet(255, 255, 255, 0);
+
+int responseCount = 0;
+String readString = String(100); // string for fetching data from address
+
+EthernetServer server(WEB_PORT);
+
+struct WebState {
+	char	request[WEB_REQSIZE + 1];
+	char	url_params[WEB_PARAM_SIZE + 1];
+};
+
+struct WebState webstate;
+
+void setup()
+{
+	Serial.begin(9600);
+
+	// disable w5100 while setting up SD
+	pinMode(ETHERNET_PIN, OUTPUT);
+	digitalWrite(ETHERNET_PIN, HIGH);
+
+	Serial.print("Starting SD... ");
+	if (!SD.begin(SD_PIN)) Serial.println("FAILED");
+	else Serial.println("OK");
+
+	Ethernet.begin(mac, ip, gateway, gateway, subnet);
+
+	// For DHCP
+	////if (Ethernet.begin(mac) == 0) {
+	////	Serial.println("Failed to configure Ethernet using DHCP");
+	////	// no point in carrying on, so do nothing forevermore:
+	////	for (;;)
+	////		;
+	////}
+
+	// print your local IP address:
+	Serial.print("Server IP: ");
+	Serial.println(Ethernet.localIP());
+
+	digitalWrite(ETHERNET_PIN, HIGH);
+
+	delay(1000);
+	server.begin();
+	Serial.println("Server Ready");
+}
+
+void loop() {
+	// Create a client connection
+	EthernetClient client = server.available();
+
+	/* -------------------------------- */
+	if (serverIdle(client))
+		return;
+	/* -------------------------------- */
+
+	if (checkRequest("status")) {
+		printStatus(client);
+	}
+	else if (checkRequest("list-log-files")) {
+		listLogFiles(client);
+	}
+	else if (checkRequest("read-log-file")) {
+		// Request format: http://192.168.1.110/read-log-file?filename=17091818.TH
+		readLogFile(client);
+	}
+	else if (checkRequest("delete-log-file")) {
+		// Request format: http://192.168.1.110/delete-log-file?filename=17091818.TH
+		//deleteLogFile(client);
+	}
+	else if (checkRequest("current-time")) {
+		printDateTime(client);
+	}
+	else {
+		send404(client);
+	}
+
+	client.stop();
+
+}
+
+void sendFile(EthernetClient client, char *path)
+{
+	char fullpath[25];
+	strncpy(fullpath, "/", 24);
+	strncat(fullpath, path, 24);
+	if (SD.exists(fullpath)) {
+		File f = SD.open(fullpath, FILE_READ);
+		int16_t c;
+		char buffer[WEB_BUFFER + 1];
+		int i = 0;
+		do {
+			readFile(f, buffer, sizeof(buffer));
+			client.print(buffer);
+		} while (strlen(buffer));
+		f.close();
+	}
+	else {
+		client.print("File not found: ");
+		client.println(fullpath);
+	}
+}
+
+int readFile(File file, char *buf, int length)
+{
+	int count = 0;
+	int16_t c;
+	while ((c = file.read()) > 0) {
+		buf[count++] = (char)c;
+		if (count >= length)
+			break;
+	}
+	buf[count] = 0;
+	return count;
+}
+
+void send404(EthernetClient client)
+{
+	client.println("HTTP/1.1 404 Not Found");
+	client.println("Content-Type: text/html");
+	client.println();
+	client.println("404 Gone for good");
+}
+
+int getFreeRam() {
+	extern int __heap_start, *__brkval;
+	int v;
+	return (int)&v - (__brkval == 0 ? (int)&__heap_start : (int)__brkval);
+}
+
+void printStatus(EthernetClient client) {
+	writeSpecialHeader(client, "application/json");
+	client.println("{\"Status\":\"OK\"}");
+}
+
+void printDateTime(EthernetClient client) {
+	writeSpecialHeader(client, "application/json");
+	client.println("{\"Date\":\"2017-09-01\",\"Time\":\"21:15:00\"}");
+}
+
+void readLogFile(EthernetClient client) {
+	writeDefaultHeader(client);
+
+	// This is the only way I've got so far to read the filename from the querystring
+	int equalsIndex = String(webstate.url_params).indexOf('=');  // finds location of first (=)
+	char * filePath = new char[String(webstate.url_params).substring(equalsIndex + 1).length() + 1];
+	strcpy(filePath, String(webstate.url_params).substring(equalsIndex + 1).c_str());
+
+	sendFile(client, filePath);
+}
+
+void listLogFiles(EthernetClient client) {
+
+	File dir = SD.open("/");
+	bool isFirstFile = true;
+	String filesList = "";
+	while (true) {
+		File entry = dir.openNextFile();
+		if (!entry) {
+			// no more files
+			break;
+		}
+
+		if (!entry.isDirectory() && isLogFile(entry.name())) {
+			if (isFirstFile) {
+				filesList += entry.name();
+				isFirstFile = false;
+			}
+			else
+			{
+				filesList += ",";
+				filesList += entry.name();
+			}
+		}
+
+		entry.close();
+	}
+
+	writeDefaultHeader(client);
+	client.println(filesList);
+}
+
+bool isLogFile(char* filename) {
+	int8_t len = strlen(filename);
+	bool result;
+	if (strstr(strlwr(filename + (len - 3)), ".th")) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
+#pragma region WebServer methods
+
+int readlineClient(EthernetClient client, char *buf, int length)
+{
+	if (!client.available())
+		return -1;
+
+	int count = 0;
+	char c;
+	while ((c = client.read()) > 0) {
+		if (c == '\r')
+			continue;
+		if (c == '\n')
+			break;
+		if (count >= length)
+			break;
+		buf[count++] = c;
+	}
+	buf[count] = 0;
+	return count;
+}
+
+int checkRequest(char *s)
+{
+	if (strncmp(webstate.request, s, WEB_REQSIZE) == 0)
+		return 1;
+	return 0;
+}
+
+int isGetRequest(char *buf)
+{
+	// a very simple test, but it works for now
+	if (strstr(buf, "GET ") != 0)
+		return 1;
+	return 0;
+}
+
+void parseGetRequest(char *buffer)
+{
+	// cut off the protocol version
+	(strchr(&(buffer[5]), ' '))[0] = 0x0;
+	// copy and truncate request
+	strncpy(webstate.request, &(buffer[5]), WEB_REQSIZE);
+	(strchr(webstate.request, '?'))[0] = 0x0;
+	// arguments string
+	strncpy(webstate.url_params, strchr(&(buffer[5]), '?') + 1, WEB_PARAM_SIZE);
+}
+
+int serverIdle(EthernetClient client)
+{
+	if (!client) {
+		delay(1);
+		client.stop();
+		return 1;
+	}
+	char buffer[URL_BUFFER];
+	while (client.connected() && client.available()) {
+		readlineClient(client, buffer, sizeof(buffer));
+		if (isGetRequest(buffer)) {
+			parseGetRequest(buffer);
+			Serial.print("request=");
+			Serial.println(webstate.request);
+			Serial.print("url_params=");
+			Serial.println(webstate.url_params);
+		}
+	}
+	return 0;
+}
+
+void writeDefaultHeader(EthernetClient client)
+{
+	client.println("HTTP/1.1 200 OK");
+	client.println("Content-Type: text/html");
+	client.println();
+}
+
+void writeSpecialHeader(EthernetClient client, char *contenttype)
+{
+	client.println("HTTP/1.1 200 OK");
+	client.print("Content-Type: ");
+	client.println(contenttype);
+	client.println();
+}
+
+#pragma endregion
+
+//void loop()
+//{
+//	EthernetClient client = server.available();
+//	if (client) {
+//		boolean currentLineIsBlank = true;
+//		boolean currentLineIsGet = true;
+//		int const bufSize = 100;
+//		int tCount = 0;
+//		char tBuf[bufSize];
+//
+//		Serial.print("Client request: ");
+//
+//		while (client.connected()) {
+//			while (client.available()) {
+//				char c = client.read();
+//			
+//				if (currentLineIsGet && tCount < (bufSize - 1))
+//				{
+//					tBuf[tCount] = c;
+//					tCount++;
+//					tBuf[tCount] = 0;
+//				}
+//
+//				if (c == '\n' && currentLineIsBlank) {
+//					Serial.println(tBuf);
+//					Serial.print("POST data: ");
+//					while (client.available()) Serial.write(client.read());
+//					//Serial.println();
+//
+//					// send a standard http response
+//					Serial.println("Sending response");
+//					client.print("HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n");
+//					client.print("Server responded ");
+//
+//					if(tBuf.contains(""))
+//					
+//					//Serial.println(freeRam());
+//					//File fh = SD.open("INDEX.HTM");
+//					/*File fh = SD.open(fileToRead, FILE_READ);
+//
+//					if (fh) {
+//
+//						byte clientBuf[64];
+//						int clientCount = 0;
+//
+//						while (fh.available()) {
+//							clientBuf[clientCount] = fh.read();
+//							clientCount++;
+//
+//							if (clientCount > 63)
+//							{
+//								Serial.println("Packet");
+//								client.write(clientBuf, 64);
+//								clientCount = 0;
+//							}
+//						}
+//
+//						if (clientCount > 0) client.write(clientBuf, clientCount);
+//
+//						fh.close();
+//					}
+//					else Serial.println("file open failed");*/
+//
+//					client.stop();
+//				}
+//				else if (c == '\n') {
+//					currentLineIsBlank = true;
+//					currentLineIsGet = false;
+//				}
+//				else if (c != '\r') {
+//					currentLineIsBlank = false;
+//				}
+//			}
+//		}
+//		Serial.println("done");
+//	}
+//}
+
+
+
+//if (client) {
+//	while (client.connected()) {
+//		if (client.available()) {
+//			char c = client.read();
+
+//			//read char by char HTTP request
+//			if (readString.length() < 100) {
+
+//				//store characters to string 
+//				readString += c;
+//				//Serial.print(c);
+//			}
+
+//			//if HTTP request has ended
+//			if (c == '\n') {
+
+//				///////////////
+//				Serial.println(readString); //print to serial monitor for debuging 
+
+//											//now output HTML data header
+
+//											///////////////////// control arduino pin
+//				client.println("HTTP/1.1 200 OK"); //send new page
+//				client.println("Content-Type: text/html");
+//				client.println();
+
+//				client.println("<HTML>");
+//				client.println("<HEAD>");
+//				client.println("<TITLE>SySSensor Server</TITLE>");
+//				client.println("</HEAD>");
+//				client.println("<BODY>");
+
+//				if (readString.indexOf("last-read") > 0)//checks for on
+//				{
+//					client.println("<h2>LAST READ REQUESTED</h2>");
+//				}
+//				if (readString.indexOf("logs") > 0)//checks for off
+//				{
+//					client.println("<h2>LOGS REQUESTED</h2>");
+//				}
+
+//				if (readString.indexOf("list-files") > 0)//checks for off
+//				{
+//					root = SD.open("/");
+//					PrintDirectory(root, 0);
+//				}
+
+//				/*client.println("<a href='/?on1' target='inlineframe'>ON</a>");
+//				client.println("<a href='/?off' target='inlineframe'>OFF</a>");
+
+//				client.println("<IFRAME name=inlineframe style='display:none'>");
+//				client.println("</IFRAME>");*/
+
+//				client.println("</BODY>");
+//				client.println("</HTML>");
+
+
+//				delay(1);
+//				//stopping client
+//				client.stop();
+
+//				//clearing string for next read
+//				readString = "";
+
+//			}
+//		}
+//	}
+//}
