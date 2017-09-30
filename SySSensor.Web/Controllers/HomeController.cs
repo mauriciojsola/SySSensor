@@ -27,7 +27,7 @@ namespace SySSensor.Web.Controllers
             {
                 Debug.WriteLine("***********************************************");
                 Debug.WriteLine("******** FILE: " + file);
-                var fileContent = service.GetRemoteLogFileName(file);
+                var fileContent = service.GetRemoteLogContent(file);
                 Debug.WriteLine("CONTENT: " + fileContent);
             }
 
