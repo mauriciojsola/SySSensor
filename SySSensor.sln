@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Resources", "Resources", "{613BCB0A-ADE7-4F48-839B-BBADA248FC9F}"
 	ProjectSection(SolutionItems) = preProject
 		Resources\Humedad.txt = Resources\Humedad.txt
+		Resources\SysSensorDBSchema.sql = Resources\SysSensorDBSchema.sql
 		Resources\WebServer.txt = Resources\WebServer.txt
 	EndProjectSection
 EndProject

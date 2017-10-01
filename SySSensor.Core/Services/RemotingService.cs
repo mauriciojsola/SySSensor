@@ -4,6 +4,8 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using Flurl.Http;
+using SySSensor.Core.DAL;
+using SySSensor.Core.Entities;
 
 namespace SySSensor.Core.Services
 {
@@ -29,7 +31,7 @@ namespace SySSensor.Core.Services
             {
                 Debug.WriteLine("ERROR: " + ex.Message);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine("ERROR: " + ex.Message);
             }
@@ -56,7 +58,23 @@ namespace SySSensor.Core.Services
                 Debug.WriteLine("ERROR: " + ex.Message);
             }
             return string.Empty;
+        }
 
+        public void UpdateLogFiles()
+        {
+            var db = new SySDB();
+            var remoteFiles = GetRemoteLogFileNames();
+            foreach (var remoteFile in remoteFiles)
+            {
+                var logFile = db.LogFiles.FirstOrDefault(x => x.FileName == remoteFile);
+                if (logFile != null) continue;
+                logFile = new LogFile
+                {
+                    FileName = remoteFile
+                };
+                db.LogFiles.Add(logFile);
+            }
+            db.SaveChanges();
         }
     }
 }
