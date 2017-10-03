@@ -76,5 +76,22 @@ namespace SySSensor.Core.Services
             }
             db.SaveChanges();
         }
+
+        public void RetrieveLogsContent()
+        {
+            var db = new SySDB();
+            var pendingProcessLogs = db.LogFiles.Where(x => !x.ProcessDate.HasValue).ToList();
+            foreach (var pendingProcessLog in pendingProcessLogs)
+            {
+                var logContent = GetRemoteLogContent(pendingProcessLog.FileName);
+                Debug.WriteLine(pendingProcessLog.FileName + ": [" + logContent + "]");
+                if (!string.IsNullOrWhiteSpace(logContent))
+                {
+                    pendingProcessLog.ProcessDate = DateTime.Now;
+                    pendingProcessLog.FileContent = logContent;
+                    db.SaveChanges();
+                }
+            }
+        }
     }
 }

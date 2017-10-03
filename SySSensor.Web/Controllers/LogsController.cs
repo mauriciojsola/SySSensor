@@ -7,8 +7,11 @@ using SySSensor.Web.Models;
 
 namespace SySSensor.Web.Controllers
 {
+    [RoutePrefix("api/logs")]
     public class LogsController : ApiController
     {
+        [HttpGet]
+        [Route("get-logs")]
         public IList<SensorLogDataViewModel> GetLogs()
         {
             var db = new SySDB();
@@ -21,6 +24,13 @@ namespace SySSensor.Web.Controllers
                 Temperature = x.Temperature,
                 Humidity = x.Humidity
             }).ToList();
+        }
+
+        [HttpGet]
+        [Route("ready")]
+        public bool IsReady()
+        {
+            return true;
         }
     }
 }

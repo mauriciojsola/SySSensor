@@ -34,6 +34,7 @@ namespace SySSensor.Web
             _backgroundJobServer = new BackgroundJobServer();
 
             RecurringJob.AddOrUpdate<RemotingService>("UpdateLogFilesJob", x => x.UpdateLogFiles(), Cron.Hourly);
+            RecurringJob.AddOrUpdate<RemotingService>("RetrieveLogsContent", x => x.RetrieveLogsContent(), Cron.Hourly);
         }
 
         protected void Application_End(object sender, EventArgs e)

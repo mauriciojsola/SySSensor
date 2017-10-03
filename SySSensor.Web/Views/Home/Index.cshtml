@@ -25,7 +25,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
             "use strict";
-            var url = 'api' + '@Url.Action("GetLogs", "Logs")';
+            var url = 'api/logs/get-logs';
             $.get(url, function (result) {
                 var thchart = Morris.Line({
                     // ID of the element in which to draw the chart.
