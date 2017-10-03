@@ -27,10 +27,22 @@ namespace SySSensor.Web.Controllers
         }
 
         [HttpGet]
-        [Route("ready")]
-        public bool IsReady()
+        [Route("ready-get")]
+        [AllowAnonymous]
+        public bool ReadyGet()
+        {
+            return true;
+        }
+
+        [HttpPost]
+        [Route("ready-post")]
+        [AllowAnonymous]
+        public bool ReadyPost()
         {
             return true;
         }
     }
 }
+
+//https://github.com/esp8266/Arduino/issues/1390   HTTP POST, GET, etc
+//http://playground.arduino.cc/Code/WebClient
