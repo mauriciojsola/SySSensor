@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
 using SySSensor.Core.DAL;
+using SySSensor.Core.Services;
 using SySSensor.Web.Models;
 using SySSensor.Web.Models.Logs;
 
 namespace SySSensor.Web.Controllers
 {
-    [RoutePrefix("api/logs")]
-    public class LogsController : ApiController
+    [RoutePrefix("api")]
+    public class SySApiController : ApiController
     {
         [HttpGet]
-        [Route("get-logs")]
+        [Route("logs/get-logs")]
         public IList<SensorLogDataViewModel> GetLogs()
         {
             var db = new SySDB();
@@ -28,27 +29,37 @@ namespace SySSensor.Web.Controllers
         }
 
         [HttpGet]
-        [Route("ready-get")]
+        [Route("logs/ready")]
         [AllowAnonymous]
-        public bool ReadyGet()
+        public bool ServerReady()
         {
             return true;
         }
 
-        [HttpPost]
-        [Route("ready-post")]
-        [AllowAnonymous]
-        public bool ReadyPost()
-        {
-            return true;
-        }
+        //[HttpPost]
+        //[Route("logs/ready-post")]
+        //[AllowAnonymous]
+        //public bool ReadyPost()
+        //{
+        //    return true;
+        //}
 
         [HttpPost]
-        [Route("save")]
+        [Route("logs/save")]
         [AllowAnonymous]
-        public bool Save(LogFileViewModel model)
+        public int SaveLogFile(LogFileViewModel model)
         {
-            return true;
+            var service = new LogsService();
+            return service.SaveLogFile(model.Filename, model.FileContent);
+        }
+
+        [HttpGet]
+        [Route("logs/check-file/{filename}")]
+        [AllowAnonymous]
+        public bool CheckLogFile(string filename)
+        {
+            var db = new SySDB();
+            return db.LogFiles.Any(x => x.FileName.Equals(filename, StringComparison.InvariantCultureIgnoreCase));
         }
     }
 }

@@ -6,6 +6,7 @@ namespace SySSensor.Core.Entities
     {
         public int Id { get; set; }
         public string FileName { get; set; }
+        public DateTime DateCreated { get; set; }
         public DateTime? ProcessDate { get; set; }
         public string FileContent { get; set; }
     }

@@ -10,12 +10,12 @@ namespace SySSensor.Core.Services
 {
     public class LogsService
     {
-        public void SaveLogFile(string fileName, string fileContent)
+        public int SaveLogFile(string fileName, string fileContent)
         {
             var db = new SySDB();
 
             var logFile = db.LogFiles.FirstOrDefault(x => x.FileName == fileName);
-            if (logFile != null) return;
+            if (logFile != null) return -1;
 
             logFile = new LogFile
             {
@@ -25,6 +25,7 @@ namespace SySSensor.Core.Services
             db.LogFiles.Add(logFile);
 
             db.SaveChanges();
+            return logFile.Id;
         }
 
         public void ProcessPendingLogs()

@@ -9,13 +9,13 @@ using SySSensor.Web.Models;
 
 namespace SySSensor.Web.Controllers
 {
-    //[Authorize]
+    [Authorize]
     public class HomeController : Controller
     {
         public ActionResult Index()
         {
             //ReadFiles();
-            ProcessLogFiles();
+            //ProcessLogFiles();
             return View();
         }
 
