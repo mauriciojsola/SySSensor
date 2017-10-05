@@ -4,12 +4,10 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Linq;
 using Flurl.Http;
-using SySSensor.Core.DAL;
-using SySSensor.Core.Entities;
 
 namespace SySSensor.Core.Services
 {
-    public class RemotingService
+    public class FetchRemoteDataService
     {
         private string ArduinoBaseUrl
         {
@@ -60,38 +58,38 @@ namespace SySSensor.Core.Services
             return string.Empty;
         }
 
-        public void UpdateLogFiles()
-        {
-            var db = new SySDB();
-            var remoteFiles = GetRemoteLogFileNames();
-            foreach (var remoteFile in remoteFiles)
-            {
-                var logFile = db.LogFiles.FirstOrDefault(x => x.FileName == remoteFile);
-                if (logFile != null) continue;
-                logFile = new LogFile
-                {
-                    FileName = remoteFile
-                };
-                db.LogFiles.Add(logFile);
-            }
-            db.SaveChanges();
-        }
+        //public void UpdateLogFiles()
+        //{
+        //    var db = new SySDB();
+        //    var remoteFiles = GetRemoteLogFileNames();
+        //    foreach (var remoteFile in remoteFiles)
+        //    {
+        //        var logFile = db.LogFiles.FirstOrDefault(x => x.FileName == remoteFile);
+        //        if (logFile != null) continue;
+        //        logFile = new LogFile
+        //        {
+        //            FileName = remoteFile
+        //        };
+        //        db.LogFiles.Add(logFile);
+        //    }
+        //    db.SaveChanges();
+        //}
 
-        public void RetrieveLogsContent()
-        {
-            var db = new SySDB();
-            var pendingProcessLogs = db.LogFiles.Where(x => !x.ProcessDate.HasValue).ToList();
-            foreach (var pendingProcessLog in pendingProcessLogs)
-            {
-                var logContent = GetRemoteLogContent(pendingProcessLog.FileName);
-                Debug.WriteLine(pendingProcessLog.FileName + ": [" + logContent + "]");
-                if (!string.IsNullOrWhiteSpace(logContent))
-                {
-                    pendingProcessLog.ProcessDate = DateTime.Now;
-                    pendingProcessLog.FileContent = logContent;
-                    db.SaveChanges();
-                }
-            }
-        }
+        //public void RetrieveLogsContent()
+        //{
+        //    var db = new SySDB();
+        //    var pendingProcessLogs = db.LogFiles.Where(x => !x.ProcessDate.HasValue).ToList();
+        //    foreach (var pendingProcessLog in pendingProcessLogs)
+        //    {
+        //        var logContent = GetRemoteLogContent(pendingProcessLog.FileName);
+        //        Debug.WriteLine(pendingProcessLog.FileName + ": [" + logContent + "]");
+        //        if (!string.IsNullOrWhiteSpace(logContent))
+        //        {
+        //            pendingProcessLog.ProcessDate = DateTime.Now;
+        //            pendingProcessLog.FileContent = logContent;
+        //            db.SaveChanges();
+        //        }
+        //    }
+        //}
     }
 }

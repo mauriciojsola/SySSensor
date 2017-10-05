@@ -33,8 +33,10 @@ namespace SySSensor.Web
             GlobalConfiguration.Configuration.UseSqlServerStorage("Repository", hangFireOptions);
             _backgroundJobServer = new BackgroundJobServer();
 
-            RecurringJob.AddOrUpdate<RemotingService>("UpdateLogFilesJob", x => x.UpdateLogFiles(), Cron.Hourly);
-            RecurringJob.AddOrUpdate<RemotingService>("RetrieveLogsContent", x => x.RetrieveLogsContent(), Cron.Hourly);
+            // The following methods will retrieve both the log file names and subsequently, the logs content. We will do the reverse: The arduino will ping
+            // the Sensor API and post the files within a recurring task at the Arduino side. 
+            //RecurringJob.AddOrUpdate<RemotingService>("UpdateLogFilesJob", x => x.UpdateLogFiles(), Cron.Hourly);
+            //RecurringJob.AddOrUpdate<RemotingService>("RetrieveLogsContent", x => x.RetrieveLogsContent(), Cron.Hourly);
         }
 
         protected void Application_End(object sender, EventArgs e)

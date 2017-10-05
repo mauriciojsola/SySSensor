@@ -15,12 +15,13 @@ namespace SySSensor.Web.Controllers
         public ActionResult Index()
         {
             //ReadFiles();
+            ProcessLogFiles();
             return View();
         }
 
         private void ReadFiles()
         {
-            var service = new RemotingService();
+            var service = new FetchRemoteDataService();
             var files = service.GetRemoteLogFileNames();
 
             foreach (var file in files.Take(3))
@@ -31,6 +32,12 @@ namespace SySSensor.Web.Controllers
                 Debug.WriteLine("CONTENT: " + fileContent);
             }
 
+        }
+
+        private void ProcessLogFiles()
+        {
+            var service = new LogsService();
+            service.ProcessPendingLogs();
         }
 
         //public ActionResult About()

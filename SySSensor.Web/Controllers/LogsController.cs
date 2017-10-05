@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web.Http;
 using SySSensor.Core.DAL;
 using SySSensor.Web.Models;
+using SySSensor.Web.Models.Logs;
 
 namespace SySSensor.Web.Controllers
 {
@@ -38,6 +39,14 @@ namespace SySSensor.Web.Controllers
         [Route("ready-post")]
         [AllowAnonymous]
         public bool ReadyPost()
+        {
+            return true;
+        }
+
+        [HttpPost]
+        [Route("save")]
+        [AllowAnonymous]
+        public bool Save(LogFileViewModel model)
         {
             return true;
         }
