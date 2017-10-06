@@ -20,7 +20,8 @@ namespace SySSensor.Core.Services
             logFile = new LogFile
             {
                 FileName = fileName,
-                FileContent = fileContent
+                FileContent = fileContent,
+                DateCreated = DateTime.Today
             };
             db.LogFiles.Add(logFile);
 
