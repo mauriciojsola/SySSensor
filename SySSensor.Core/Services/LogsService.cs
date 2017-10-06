@@ -58,7 +58,7 @@ namespace SySSensor.Core.Services
             var db = new SySDB();
             foreach (var logRecord in logRecords)
             {
-                if (string.IsNullOrWhiteSpace(logRecord)) continue;
+                if (string.IsNullOrWhiteSpace(logRecord) || logRecord.Length < 13) continue;
                 var fields = logRecord.Split(',');
 
                 var readDate = ParseToDate(fields[0]);

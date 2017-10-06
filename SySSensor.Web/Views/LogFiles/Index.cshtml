@@ -15,12 +15,28 @@
                 </h3>
             </div>
             <div class="panel-body">
-                <ul>
-                    @foreach (var f in Model)
-                    {
-                        <li>@f.Filename - c: @f.DateCreated - p: @f.ProcessDate</li>
-                    }
-                </ul>
+                <table class="table table-condensed">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Created Date</th>
+                            <th>Was Processed?</th>
+                            <th>Processing Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var f in Model)
+                        {
+                            <tr>
+                                <td>@f.Filename</td>
+                                <td>@f.DateCreated.ToShortDateString()</td>
+                                <td>@(f.ProcessDate.HasValue ? "YES" : "NO")</td>
+                                <td>@(f.ProcessDate.HasValue ? f.ProcessDate.Value.ToShortDateString() : "--")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
             </div>
         </div>
     </div>

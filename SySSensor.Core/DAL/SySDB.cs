@@ -26,8 +26,5 @@ namespace SySSensor.Core.DAL
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
             modelBuilder.Properties<DateTime>().Configure(c => c.HasColumnType("datetime2"));
         }
-
-
-
     }
 }
