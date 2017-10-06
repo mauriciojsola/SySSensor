@@ -1,4 +1,5 @@
-﻿using System.Data.Entity;
+﻿using System;
+using System.Data.Entity;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using SySSensor.Core.Entities;
 
@@ -23,6 +24,7 @@ namespace SySSensor.Core.DAL
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+            modelBuilder.Properties<DateTime>().Configure(c => c.HasColumnType("datetime2"));
         }
 
 

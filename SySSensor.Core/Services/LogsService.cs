@@ -21,7 +21,7 @@ namespace SySSensor.Core.Services
             {
                 FileName = fileName,
                 FileContent = fileContent,
-                DateCreated = DateTime.Today
+                DateCreated = DateTime.Now
             };
             db.LogFiles.Add(logFile);
 
